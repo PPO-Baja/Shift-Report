@@ -322,189 +322,153 @@
   <p class="timestamp" id="genTimestamp"></p>
 </div>
 
+
 <script>
-  // ── Shift hours ───────────────────────────────────────────────
-  var shiftHours = [
-    '6:00 AM','7:00 AM','8:00 AM','9:00 AM',
-    '10:00 AM','11:00 AM','12:00 PM','1:00 PM',
-    '2:00 PM','3:00 PM','4:00 PM','5:00 PM',
-    '6:00 PM','7:00 PM'
-  ];
+const shiftHours = [
+ '6:00 AM','7:00 AM','8:00 AM','9:00 AM',
+ '10:00 AM','11:00 AM','12:00 PM','1:00 PM',
+ '2:00 PM','3:00 PM','4:00 PM','5:00 PM',
+ '6:00 PM','7:00 PM'
+];
 
-  var selectedTime = '';
+let selectedTime = '';
 
-  // ── Build pills ───────────────────────────────────────────────
-  function buildPills() {
-    var container = document.getElementById('timePills');
-    container.innerHTML = '';
-    for (var i = 0; i < shiftHours.length; i++) {
-      (function(h) {
-        var btn = document.createElement('button');
-        btn.textContent = h;
-        btn.setAttribute('type', 'button');
-        btn.addEventListener('click', function() {
-          selectPill(btn, h);
-        });
-        container.appendChild(btn);
-      })(shiftHours[i]);
-    }
-  }
+function buildPills(){
+ const container=document.getElementById('timePills');
+ container.innerHTML='';
+ shiftHours.forEach(h=>{
+   const btn=document.createElement('button');
+   btn.type='button';
+   btn.textContent=h;
+   btn.onclick=()=>selectPill(btn,h);
+   container.appendChild(btn);
+ });
+}
 
-  function selectPill(btn, value) {
-    var pills = document.querySelectorAll('#timePills button');
-    for (var i = 0; i < pills.length; i++) {
-      pills[i].classList.remove('active');
-    }
-    document.getElementById('customTime').value = '';
-    btn.classList.add('active');
-    selectedTime = value;
-    updateBadge();
-  }
+function selectPill(btn,value){
+ document.querySelectorAll('#timePills button').forEach(b=>b.classList.remove('active'));
+ document.getElementById('customTime').value='';
+ btn.classList.add('active');
+ selectedTime=value;
+ updateBadge();
+}
 
-  function updateBadge() {
-    var badge = document.getElementById('selectedTimeBadge');
-    badge.textContent = selectedTime ? ('⏰ ' + selectedTime) : 'Sin seleccionar';
-  }
+function updateBadge(){
+ document.getElementById('selectedTimeBadge').textContent =
+   selectedTime ? '⏰ '+selectedTime : 'Sin seleccionar';
+}
 
-  // ── Custom time ───────────────────────────────────────────────
-  function onCustomTimeChange() {
-    var val = document.getElementById('customTime').value;
-    if (!val) return;
-    var pills = document.querySelectorAll('#timePills button');
-    for (var i = 0; i < pills.length; i++) {
-      pills[i].classList.remove('active');
-    }
-    var parts = val.split(':');
-    var hh = parseInt(parts[0]);
-    var mm = parts[1];
-    var suffix = hh >= 12 ? 'PM' : 'AM';
-    var h12 = hh % 12 === 0 ? 12 : hh % 12;
-    selectedTime = h12 + ':' + mm + ' ' + suffix;
-    updateBadge();
-  }
+function onCustomTimeChange(){
+ const val=document.getElementById('customTime').value;
+ if(!val) return;
+ document.querySelectorAll('#timePills button').forEach(b=>b.classList.remove('active'));
+ const [hh,mm]=val.split(':');
+ const h=Number(hh);
+ selectedTime=((h%12)||12)+':'+mm+' '+(h>=12?'PM':'AM');
+ updateBadge();
+}
 
-  // ── Clock ─────────────────────────────────────────────────────
-  function updateClock() {
-    var now = new Date();
-    document.getElementById('reportTime').textContent =
-      now.toLocaleString('es-MX', {
-        weekday: 'short', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      });
-  }
+function updateClock(){
+ document.getElementById('reportTime').textContent =
+ new Date().toLocaleString('es-MX',{
+   weekday:'short',month:'short',day:'numeric',
+   hour:'2-digit',minute:'2-digit'
+ });
+}
 
-  // ── Build message ─────────────────────────────────────────────
-  function buildMessage() {
-    if (!selectedTime) {
-      alert('⚠️ Por favor selecciona la hora del reporte.');
-      return null;
-    }
-    function v(id) {
-      return document.getElementById(id).value.trim();
-    }
-    var produced = v('produced');
-    var target   = v('target');
-    var diff     = parseInt(produced) - parseInt(target);
-    var pct      = Math.round((parseInt(produced) / parseInt(target)) * 100);
-    var diffStr  = diff >= 0 ? ('+' + diff) : ('' + diff);
+function v(id){
+ return document.getElementById(id).value.trim();
+}
 
-    var offLines = v('offlineDetail')
-      .split('
-')
-      .filter(function(l) { return l.trim() !== ''; })
-      .map(function(l) { return '  - ' + l.trim(); })
-      .join('
-');
+function buildMessage(){
+ if(!selectedTime){
+   alert('Selecciona la hora del reporte.');
+   return null;
+ }
 
-    var equipLines = v('equipDetail')
-      .split('
-')
-      .filter(function(l) { return l.trim() !== ''; })
-      .map(function(l) { return '  - ' + l.trim(); })
-      .join('
-');
+ const produced=Number(v('produced'))||0;
+ const target=Number(v('target'))||0;
+ const diff=produced-target;
+ const pct=target>0?Math.round((produced/target)*100):0;
 
-    return '*' + v('reportTitle') + '*
-' +
-      '*Numbers at ' + selectedTime + '*
-' +
-      produced + ' out of ' + target + ' (' + diffStr + ' vs ' + pct + '%)
+ const offline=v('offlineDetail')
+   .split('\n')
+   .filter(x=>x.trim())
+   .map(x=>'- '+x.trim())
+   .join('\n');
 
-' +
-      '*Buffer UB2:* ' + v('buffer') + '
+ const equip=v('equipDetail')
+   .split('\n')
+   .filter(x=>x.trim())
+   .map(x=>'- '+x.trim())
+   .join('\n');
 
-' +
-      '*OR:* ' + v('or') + '%
-' +
-      '*DRR:* ' + v('drr') + '%
+ return `${v('reportTitle')}
+Numeros de final a las ${selectedTime}
 
-' +
-      '*Offline:* ' + v('offlineCount') + '
-' +
-      offLines + '
+${produced} de ${target} (${diff>=0?'+':''}${diff} vs ${pct}%)
 
-' +
-      '*Work delay:* ' + v('workDelay') + '
-' +
-      '*Short Stop:* ' + v('shortStop') + '
-' +
-      '*Full Stop:* ' + v('fullStop') + '
-' +
-      '*Part Short:* ' + v('partShort') + '
+Buffer UB2: ${v('buffer')}
 
-' +
-      '*Equipment:* ' + v('equipTime') + '
-' +
-      equipLines;
-  }
+OR: ${v('or')}%
+DRR: ${v('drr')}%
 
-  // ── Send to WhatsApp ──────────────────────────────────────────
-  function sendToWhatsApp() {
-    var msg = buildMessage();
-    if (!msg) return;
-    document.getElementById('genTimestamp').textContent =
-      '✅ Generado: ' + new Date().toLocaleTimeString();
-    var url = 'https://wa.me/?text=' + encodeURIComponent(msg);
-    window.open(url, '_blank');
-  }
+Offline: ${v('offlineCount')}
+${offline}
 
-  // ── Reset form ────────────────────────────────────────────────
-  function resetForm() {
-    if (confirm('¿Resetear todos los valores?')) {
-      selectedTime = '';
-      updateBadge();
-      buildPills();
-      document.getElementById('customTime').value      = '';
-      document.getElementById('reportTitle').value     = 'Final';
-      document.getElementById('produced').value        = '27';
-      document.getElementById('target').value          = '28';
-      document.getElementById('buffer').value          = '7';
-      document.getElementById('or').value              = '95.7';
-      document.getElementById('drr').value             = '88.5';
-      document.getElementById('offlineCount').value    = '6';
-      document.getElementById('offlineDetail').value   = '1 Arrow n/g install
-3 C-Best
-1 Check engine
-1 Shift lever stuck';
-      document.getElementById('workDelay').value       = "11'35\"";
-      document.getElementById('shortStop').value       = '0';
-      document.getElementById('fullStop').value        = '0';
-      document.getElementById('partShort').value       = '0';
-      document.getElementById('equipTime').value       = '20"';
-      document.getElementById('equipDetail').value     = '20" Center Bearing-PE equipment test';
-      document.getElementById('genTimestamp').textContent = '';
-    }
-  }
+Work delay: ${v('workDelay')}
 
-  // ── Init ──────────────────────────────────────────────────────
-  buildPills();
-  updateClock();
-  setInterval(updateClock, 10000);
+Short Stop: ${v('shortStop')}
 
-  document.getElementById('customTime').addEventListener('change', onCustomTimeChange);
-  document.getElementById('btnSend').addEventListener('click', sendToWhatsApp);
-  document.getElementById('btnReset').addEventListener('click', resetForm);
+Full Stop: ${v('fullStop')}
+
+Part Short: ${v('partShort')}
+
+Equipo: ${v('equipTime')}
+${equip}`;
+}
+
+function sendToWhatsApp(){
+ const msg=buildMessage();
+ if(!msg) return;
+
+ document.getElementById('genTimestamp').textContent =
+ '✅ Generado: '+new Date().toLocaleTimeString();
+
+ window.open(
+   'https://wa.me/?text='+encodeURIComponent(msg),
+   '_blank'
+ );
+}
+
+function resetForm(){
+ if(!confirm('¿Limpiar todos los campos?')) return;
+
+ selectedTime='';
+ updateBadge();
+
+ document.querySelectorAll('#timePills button').forEach(b=>b.classList.remove('active'));
+
+ document.querySelectorAll('input').forEach(el=>{
+   if(el.type==='time') el.value='';
+   else el.value='';
+ });
+
+ document.querySelectorAll('textarea').forEach(el=>el.value='');
+
+ document.getElementById('reportTitle').value='Final';
+ document.getElementById('genTimestamp').textContent='';
+}
+
+buildPills();
+updateClock();
+setInterval(updateClock,10000);
+
+document.getElementById('customTime').addEventListener('change',onCustomTimeChange);
+document.getElementById('btnSend').addEventListener('click',sendToWhatsApp);
+document.getElementById('btnReset').addEventListener('click',resetForm);
 </script>
+
 
 </body>
 </html>
