@@ -69,7 +69,6 @@
     .metric textarea { font-size: 0.8rem; font-weight: 400; }
     .full-width { grid-column: 1 / -1; }
 
-    /* Time selector pills */
     .time-pills {
       display: flex;
       flex-wrap: wrap;
@@ -123,7 +122,6 @@
       outline: none;
       border-color: #EB0A1E;
     }
-
     .btn-send {
       width: 100%;
       background: #25D366;
@@ -184,9 +182,7 @@
   <!-- HORA DEL REPORTE -->
   <div class="section">
     <h2>🕐 Hora del Reporte</h2>
-    <div class="time-pills" id="timePills">
-      <!-- generadas por JS -->
-    </div>
+    <div class="time-pills" id="timePills"></div>
     <div class="custom-time-row">
       <label>Personalizada:</label>
       <input type="time" id="customTime" />
@@ -265,7 +261,7 @@
 
   <!-- PARADAS Y RETRASOS -->
   <div class="section">
-    <h2>⏱ Paradas & Retrasos</h2>
+    <h2>⏱ Paradas &amp; Retrasos</h2>
     <div class="grid-2">
       <div class="metric">
         <label>Work Delay</label>
@@ -302,7 +298,7 @@
   </div>
 
   <!-- BOTONES -->
-  <button class="btn-send" onclick="sendToWhatsApp()">
+  <button class="btn-send" id="btnSend">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15
                -.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075
@@ -320,145 +316,194 @@
     </svg>
     Enviar por WhatsApp
   </button>
-  <button class="btn-reset" onclick="resetForm()">🔄 Limpiar / Resetear</button>
+
+  <button class="btn-reset" id="btnReset">🔄 Limpiar / Resetear</button>
 
   <p class="timestamp" id="genTimestamp"></p>
 </div>
 
 <script>
-  // ── Horas predefinidas del turno ──────────────────────────────
-  const shiftHours = [
+  // ── Shift hours ───────────────────────────────────────────────
+  var shiftHours = [
     '6:00 AM','7:00 AM','8:00 AM','9:00 AM',
     '10:00 AM','11:00 AM','12:00 PM','1:00 PM',
     '2:00 PM','3:00 PM','4:00 PM','5:00 PM',
     '6:00 PM','7:00 PM'
   ];
 
-  let selectedTime = '';
+  var selectedTime = '';
 
-  // ── Generar pills ─────────────────────────────────────────────
+  // ── Build pills ───────────────────────────────────────────────
   function buildPills() {
-    const container = document.getElementById('timePills');
-    shiftHours.forEach(h => {
-      const btn = document.createElement('button');
-      btn.textContent = h;
-      btn.dataset.value = h;
-      btn.onclick = () => selectPill(btn, h);
-      container.appendChild(btn);
-    });
+    var container = document.getElementById('timePills');
+    container.innerHTML = '';
+    for (var i = 0; i < shiftHours.length; i++) {
+      (function(h) {
+        var btn = document.createElement('button');
+        btn.textContent = h;
+        btn.setAttribute('type', 'button');
+        btn.addEventListener('click', function() {
+          selectPill(btn, h);
+        });
+        container.appendChild(btn);
+      })(shiftHours[i]);
+    }
   }
 
   function selectPill(btn, value) {
-    // deselect all pills
-    document.querySelectorAll('.time-pills button').forEach(b => b.classList.remove('active'));
-    // clear custom time
+    var pills = document.querySelectorAll('#timePills button');
+    for (var i = 0; i < pills.length; i++) {
+      pills[i].classList.remove('active');
+    }
     document.getElementById('customTime').value = '';
-    // activate this
     btn.classList.add('active');
     selectedTime = value;
     updateBadge();
   }
 
-  // ── Custom time input ─────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
-    buildPills();
-
-    document.getElementById('customTime').addEventListener('change', function() {
-      if (!this.value) return;
-      // deselect pills
-      document.querySelectorAll('.time-pills button').forEach(b => b.classList.remove('active'));
-      // format to 12h
-      const [hh, mm] = this.value.split(':');
-      const h = parseInt(hh);
-      const suffix = h >= 12 ? 'PM' : 'AM';
-      const h12 = h % 12 === 0 ? 12 : h % 12;
-      selectedTime = `${h12}:${mm} ${suffix}`;
-      updateBadge();
-    });
-  });
-
   function updateBadge() {
-    document.getElementById('selectedTimeBadge').textContent =
-      selectedTime ? `⏰ ${selectedTime}` : 'Sin seleccionar';
+    var badge = document.getElementById('selectedTimeBadge');
+    badge.textContent = selectedTime ? ('⏰ ' + selectedTime) : 'Sin seleccionar';
   }
 
-  // ── Reloj en header ───────────────────────────────────────────
+  // ── Custom time ───────────────────────────────────────────────
+  function onCustomTimeChange() {
+    var val = document.getElementById('customTime').value;
+    if (!val) return;
+    var pills = document.querySelectorAll('#timePills button');
+    for (var i = 0; i < pills.length; i++) {
+      pills[i].classList.remove('active');
+    }
+    var parts = val.split(':');
+    var hh = parseInt(parts[0]);
+    var mm = parts[1];
+    var suffix = hh >= 12 ? 'PM' : 'AM';
+    var h12 = hh % 12 === 0 ? 12 : hh % 12;
+    selectedTime = h12 + ':' + mm + ' ' + suffix;
+    updateBadge();
+  }
+
+  // ── Clock ─────────────────────────────────────────────────────
   function updateClock() {
-    const now = new Date();
+    var now = new Date();
     document.getElementById('reportTime').textContent =
       now.toLocaleString('es-MX', {
         weekday: 'short', month: 'short', day: 'numeric',
         hour: '2-digit', minute: '2-digit'
       });
   }
-  updateClock();
-  setInterval(updateClock, 10000);
 
-  // ── Construir mensaje ─────────────────────────────────────────
+  // ── Build message ─────────────────────────────────────────────
   function buildMessage() {
     if (!selectedTime) {
       alert('⚠️ Por favor selecciona la hora del reporte.');
       return null;
     }
+    function v(id) {
+      return document.getElementById(id).value.trim();
+    }
+    var produced = v('produced');
+    var target   = v('target');
+    var diff     = parseInt(produced) - parseInt(target);
+    var pct      = Math.round((parseInt(produced) / parseInt(target)) * 100);
+    var diffStr  = diff >= 0 ? ('+' + diff) : ('' + diff);
 
-    const v = id => document.getElementById(id).value.trim();
-    const produced = v('produced');
-    const target   = v('target');
-    const diff     = parseInt(produced) - parseInt(target);
-    const pct      = Math.round((parseInt(produced) / parseInt(target)) * 100);
-    const diffStr  = diff >= 0 ? `+${diff}` : `${diff}`;
-
-    const offLines = v('offlineDetail')
+    var offLines = v('offlineDetail')
       .split('
 ')
-      .filter(l => l.trim())
-      .map(l => `  - ${l.trim()}`)
+      .filter(function(l) { return l.trim() !== ''; })
+      .map(function(l) { return '  - ' + l.trim(); })
       .join('
 ');
 
-    const equipLines = v('equipDetail')
+    var equipLines = v('equipDetail')
       .split('
 ')
-      .filter(l => l.trim())
-      .map(l => `  - ${l.trim()}`)
+      .filter(function(l) { return l.trim() !== ''; })
+      .map(function(l) { return '  - ' + l.trim(); })
       .join('
 ');
 
-    return `*${v('reportTitle')}*
-*Numbers at ${selectedTime}*
-${produced} out of ${target} (${diffStr} vs ${pct}%)
+    return '*' + v('reportTitle') + '*
+' +
+      '*Numbers at ' + selectedTime + '*
+' +
+      produced + ' out of ' + target + ' (' + diffStr + ' vs ' + pct + '%)
 
-*Buffer UB2:* ${v('buffer')}
+' +
+      '*Buffer UB2:* ' + v('buffer') + '
 
-*OR:* ${v('or')}%
-*DRR:* ${v('drr')}%
+' +
+      '*OR:* ' + v('or') + '%
+' +
+      '*DRR:* ' + v('drr') + '%
 
-*Offline:* ${v('offlineCount')}
-${offLines}
+' +
+      '*Offline:* ' + v('offlineCount') + '
+' +
+      offLines + '
 
-*Work delay:* ${v('workDelay')}
-*Short Stop:* ${v('shortStop')}
-*Full Stop:* ${v('fullStop')}
-*Part Short:* ${v('partShort')}
+' +
+      '*Work delay:* ' + v('workDelay') + '
+' +
+      '*Short Stop:* ' + v('shortStop') + '
+' +
+      '*Full Stop:* ' + v('fullStop') + '
+' +
+      '*Part Short:* ' + v('partShort') + '
 
-*Equipment:* ${v('equipTime')}
-${equipLines}`;
+' +
+      '*Equipment:* ' + v('equipTime') + '
+' +
+      equipLines;
   }
 
-  // ── Enviar a WhatsApp ─────────────────────────────────────────
+  // ── Send to WhatsApp ──────────────────────────────────────────
   function sendToWhatsApp() {
-    const msg = buildMessage();
+    var msg = buildMessage();
     if (!msg) return;
     document.getElementById('genTimestamp').textContent =
       '✅ Generado: ' + new Date().toLocaleTimeString();
-    const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    var url = 'https://wa.me/?text=' + encodeURIComponent(msg);
     window.open(url, '_blank');
   }
 
-  // ── Resetear formulario ───────────────────────────────────────
+  // ── Reset form ────────────────────────────────────────────────
   function resetForm() {
-    if (confirm('¿Resetear todos los valores?')) location.reload();
+    if (confirm('¿Resetear todos los valores?')) {
+      selectedTime = '';
+      updateBadge();
+      buildPills();
+      document.getElementById('customTime').value      = '';
+      document.getElementById('reportTitle').value     = 'Final';
+      document.getElementById('produced').value        = '27';
+      document.getElementById('target').value          = '28';
+      document.getElementById('buffer').value          = '7';
+      document.getElementById('or').value              = '95.7';
+      document.getElementById('drr').value             = '88.5';
+      document.getElementById('offlineCount').value    = '6';
+      document.getElementById('offlineDetail').value   = '1 Arrow n/g install
+3 C-Best
+1 Check engine
+1 Shift lever stuck';
+      document.getElementById('workDelay').value       = "11'35\"";
+      document.getElementById('shortStop').value       = '0';
+      document.getElementById('fullStop').value        = '0';
+      document.getElementById('partShort').value       = '0';
+      document.getElementById('equipTime').value       = '20"';
+      document.getElementById('equipDetail').value     = '20" Center Bearing-PE equipment test';
+      document.getElementById('genTimestamp').textContent = '';
+    }
   }
+
+  // ── Init ──────────────────────────────────────────────────────
+  buildPills();
+  updateClock();
+  setInterval(updateClock, 10000);
+
+  document.getElementById('customTime').addEventListener('change', onCustomTimeChange);
+  document.getElementById('btnSend').addEventListener('click', sendToWhatsApp);
+  document.getElementById('btnReset').addEventListener('click', resetForm);
 </script>
 
 </body>
