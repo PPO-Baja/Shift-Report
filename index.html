@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Shift Report</title>
+  <title>Reporte de Turno</title>
   <link rel="manifest" href="manifest.json" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,8 +15,8 @@
       margin: auto;
     }
     header {
-      background: #EB0A1E;
-      color: white;
+      background: #036587;
+      color: #E8E8E8;
       padding: 14px 16px;
       border-radius: 12px 12px 0 0;
       text-align: center;
@@ -173,7 +173,7 @@
 <body>
 
 <header>
-  <h1>📋 SHIFT REPORT</h1>
+  <h1>📋 REPORTE DE TURNO</h1>
   <p id="reportTime">Cargando hora...</p>
 </header>
 
@@ -199,10 +199,10 @@
       <label>Título</label>
       <select id="reportTitle">
         <option value="Final">Final</option>
-        <option value="Hourly">Hourly</option>
-        <option value="Mid-Shift">Mid-Shift</option>
-        <option value="Start of Shift">Start of Shift</option>
-        <option value="End of Shift">End of Shift</option>
+        <option value="Hourly">Trim</option>
+        <option value="Mid-Shift">Chasis</option>
+        <option value="Start of Shift">Motores</option>
+        <option value="End of Shift">Puertas</option>
       </select>
     </div>
   </div>
@@ -213,7 +213,7 @@
     <div class="grid-2">
       <div class="metric">
         <label>Producidas</label>
-        <input type="number" id="produced" value="27" min="0" />
+        <input type="number" id="produced" value="0" min="0" />
       </div>
       <div class="metric">
         <label>Objetivo</label>
@@ -221,7 +221,7 @@
       </div>
       <div class="metric">
         <label>Buffer UB2</label>
-        <input type="number" id="buffer" value="7" min="0" />
+        <input type="number" id="buffer" value="0" min="0" />
       </div>
     </div>
     <div id="productionStatus" style="margin-top:10px;padding:12px;border-radius:8px;background:#f5f5f5;font-weight:bold;text-align:center;">Selecciona una hora</div>
@@ -237,7 +237,7 @@
       </div>
       <div class="metric">
         <label>DRR (%)</label>
-        <input type="number" id="drr" value="88.5" step="0.1" min="0" max="100" />
+        <input type="number" id="drr" value="0" step="0.1" min="0" max="100" />
       </div>
     </div>
   </div>
@@ -248,14 +248,11 @@
     <div class="grid-2">
       <div class="metric">
         <label>Cantidad Offline</label>
-        <input type="number" id="offlineCount" value="6" min="0" />
+        <input type="number" id="offlineCount" value="0" min="0" />
       </div>
       <div class="metric full-width">
         <label>Detalle (una razón por línea)</label>
-        <textarea id="offlineDetail" rows="5">1 Arrow n/g install
-3 C-Best
-1 Check engine
-1 Shift lever stuck</textarea>
+        <textarea id="offlineDetail" rows="7"> </textarea>
       </div>
     </div>
   </div>
@@ -266,7 +263,7 @@
     <div class="grid-2">
       <div class="metric">
         <label>Work Delay</label>
-        <input type="text" id="workDelay" value="11'35&quot;" placeholder="MM'SS&quot;" />
+        <input type="text" id="workDelay" value="0" placeholder="0" />
       </div>
       <div class="metric">
         <label>Short Stop</label>
@@ -289,11 +286,11 @@
     <div class="grid-2">
       <div class="metric">
         <label>Tiempo</label>
-        <input type="text" id="equipTime" value='20"' />
+        <input type="text" id="equipTime" value='0' />
       </div>
       <div class="metric full-width">
         <label>Detalle</label>
-        <textarea id="equipDetail" rows="2">20" Center Bearing-PE equipment test</textarea>
+        <textarea id="equipDetail" rows="4"> </textarea>
       </div>
     </div>
   </div>
@@ -508,3 +505,4 @@ document.getElementById('produced').addEventListener('input',calculateKPIs);
 
 </body>
 </html>
+
