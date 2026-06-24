@@ -217,13 +217,14 @@
       </div>
       <div class="metric">
         <label>Objetivo</label>
-        <input type="number" id="target" value="28" min="0" />
+        <input type="number" id="target" readonly />
       </div>
       <div class="metric">
         <label>Buffer UB2</label>
         <input type="number" id="buffer" value="7" min="0" />
       </div>
     </div>
+    <div id="productionStatus" style="margin-top:10px;padding:12px;border-radius:8px;background:#f5f5f5;font-weight:bold;text-align:center;">Selecciona una hora</div>
   </div>
 
   <!-- KPIs -->
@@ -232,7 +233,7 @@
     <div class="grid-2">
       <div class="metric">
         <label>OR (%)</label>
-        <input type="number" id="or" value="95.7" step="0.1" min="0" max="100" />
+        <input type="number" id="or" readonly step="0.1" />
       </div>
       <div class="metric">
         <label>DRR (%)</label>
@@ -324,14 +325,46 @@
 
 
 <script>
-const shiftHours = [
- '6:00 AM','7:00 AM','8:00 AM','9:00 AM',
- '10:00 AM','11:00 AM','12:00 PM','1:00 PM',
- '2:00 PM','3:00 PM','4:00 PM','5:00 PM',
- '6:00 PM','7:00 PM'
-];
+const productionPlan = {
+  '7:00 AM': { target: 28, minutes: 54 },
+  '8:00 AM': { target: 60, minutes: 114 },
+  '9:00 AM': { target: 81, minutes: 154 },
+  '10:00 AM': { target: 113, minutes: 214 },
+  '11:00 AM': { target: 145, minutes: 274 },
+  '12:00 PM': { target: 161, minutes: 304 },
+  '1:00 PM': { target: 193, minutes: 364 },
+  '1:50 PM': { target: 206, minutes: 418 }
+};
+
+const shiftHours = Object.keys(productionPlan);
 
 let selectedTime = '';
+
+function calculateKPIs() {
+  if (!selectedTime || !productionPlan[selectedTime]) return;
+
+  const produced = Number(document.getElementById('produced').value) || 0;
+  const target = productionPlan[selectedTime].target;
+  const minutes = productionPlan[selectedTime].minutes;
+
+  document.getElementById('target').value = target;
+
+  const diff = produced - target;
+  const pct = target > 0 ? Math.round((produced / target) * 100) : 0;
+  const or = ((produced * 1.8833) / minutes) * 100;
+
+  document.getElementById('or').value = or.toFixed(1);
+
+  const status = document.getElementById('productionStatus');
+  if(status){
+    let color='#c62828', icon='🔴';
+    if(pct >= 100){ color='#2e7d32'; icon='🟢'; }
+    else if(pct >= 95){ color='#ef6c00'; icon='🟠'; }
+
+    status.style.color=color;
+    status.innerHTML=`${icon} ${produced} de ${target} (${diff>=0?'+':''}${diff} vs ${pct}%)`;
+  }
+}
 
 function buildPills(){
  const container=document.getElementById('timePills');
@@ -351,6 +384,7 @@ function selectPill(btn,value){
  btn.classList.add('active');
  selectedTime=value;
  updateBadge();
+ calculateKPIs();
 }
 
 function updateBadge(){
@@ -366,6 +400,7 @@ function onCustomTimeChange(){
  const h=Number(hh);
  selectedTime=((h%12)||12)+':'+mm+' '+(h>=12?'PM':'AM');
  updateBadge();
+ calculateKPIs();
 }
 
 function updateClock(){
@@ -467,6 +502,7 @@ setInterval(updateClock,10000);
 document.getElementById('customTime').addEventListener('change',onCustomTimeChange);
 document.getElementById('btnSend').addEventListener('click',sendToWhatsApp);
 document.getElementById('btnReset').addEventListener('click',resetForm);
+document.getElementById('produced').addEventListener('input',calculateKPIs);
 </script>
 
 
