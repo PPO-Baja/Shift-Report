@@ -1,6 +1,6 @@
 {
   "name": "Shift Report",
-  "short_name": "ShiftRpt",
+  "short_name": "Reporte de turno",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#f0f2f5",
