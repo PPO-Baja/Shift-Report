@@ -178,7 +178,20 @@
 </header>
 
 <div class="card">
+<div class="section">
+  <h2>🔄 Turno</h2>
 
+  <div class="metric">
+    <label>Seleccionar turno</label>
+
+    <select id="shiftSelector">
+      <option value="turno1">Turno 1 (6:00 AM - 1:50 PM)</option>
+      <option value="turno2">Turno 2 (1:50 PM - 10:30 PM)</option>
+      <option value="turno3" selected>Turno 3 (10:30 PM - 6:00 AM)</option>
+      <option value="sabado">Sábado (6:00 AM - 4:00 PM)</option>
+    </select>
+  </div>
+</div>
   <!-- HORA DEL REPORTE -->
   <div class="section">
     <h2>🕐 Hora del Reporte</h2>
@@ -322,124 +335,266 @@
 
 
 <script>
-const productionPlan = {
-  '07:00 AM': { target: 28, minutes: 54 },
-  '08:00 AM': { target: 60, minutes: 114 },
-  '09:00 AM': { target: 81, minutes: 154 },
-  '10:00 AM': { target: 113, minutes: 214 },
-  '11:00 AM': { target: 145, minutes: 274 },
-  '12:00 PM': { target: 161, minutes: 304 },
-  '01:00 PM': { target: 193, minutes: 364 },
-  '01:50 PM': { target: 206, minutes: 408 }
-  
+
+const shiftPlans = {
+
+  turno1: {
+    '07:00 AM': { target: 28, minutes: 54 },
+    '08:00 AM': { target: 60, minutes: 114 },
+    '09:00 AM': { target: 81, minutes: 154 },
+    '10:00 AM': { target: 113, minutes: 214 },
+    '11:00 AM': { target: 145, minutes: 274 },
+    '12:00 PM': { target: 161, minutes: 304 },
+    '01:00 PM': { target: 193, minutes: 364 },
+    '01:50 PM': { target: 206, minutes: 408 }
+  },
+
+  turno2: {
+    '02:00 PM': { target: 5, minutes: 10 },
+    '03:00 PM': { target: 36, minutes: 70 },
+    '04:00 PM': { target: 68, minutes: 130 },
+    '05:00 PM': { target: 89, minutes: 170 },
+    '06:00 PM': { target: 116, minutes: 220 },
+    '07:00 PM': { target: 148, minutes: 280 },
+    '08:00 PM': { target: 174, minutes: 330 },
+    '09:00 PM': { target: 206, minutes: 390 },
+    '10:00 PM': { target: 238, minutes: 450 },
+    '10:30 PM': { target: 239, minutes: 474 }
+  },
+
+  turno3: {
+    '11:00 PM': { target: 15, minutes: 30 },
+    '12:00 AM': { target: 47, minutes: 90 },
+    '01:00 AM': { target: 74, minutes: 140 },
+    '02:00 AM': { target: 106, minutes: 200 },
+    '03:00 AM': { target: 122, minutes: 230 },
+    '04:00 AM': { target: 153, minutes: 290 },
+    '05:00 AM': { target: 180, minutes: 340 },
+    '06:00 AM': { target: 201, minutes: 400 }
+  },
+
+  sabado: {
+    '07:00 AM': { target: 28, minutes: 54 },
+    '08:00 AM': { target: 60, minutes: 114 },
+    '09:00 AM': { target: 81, minutes: 154 },
+    '10:00 AM': { target: 113, minutes: 214 },
+    '11:00 AM': { target: 145, minutes: 274 },
+    '12:00 AM': { target: 164, minutes: 334 },
+    '01:00 PM': { target: 193, minutes: 364 },
+    '02:00 PM': { target: 219, minutes: 424 },
+    '03:00 PM': { target: 251, minutes: 474 },
+    '04:06 PM': { target: 272, minutes: 540 }
+    
+  }
+
 };
 
-const shiftHours = Object.keys(productionPlan);
-
 let selectedTime = '';
+let currentShift = 'turno3';
+
+function getCurrentPlan() {
+  return shiftPlans[currentShift];
+}
 
 function calculateKPIs() {
-  if (!selectedTime || !productionPlan[selectedTime]) return;
 
-  const produced = Number(document.getElementById('produced').value) || 0;
-  const target = productionPlan[selectedTime].target;
-  const minutes = productionPlan[selectedTime].minutes;
+  const plan = getCurrentPlan();
+
+  if (!selectedTime || !plan[selectedTime]) return;
+
+  const produced =
+    Number(document.getElementById('produced').value) || 0;
+
+  const target = plan[selectedTime].target;
+  const minutes = plan[selectedTime].minutes;
 
   document.getElementById('target').value = target;
 
   const diff = produced - target;
-  const pct = target > 0 ? Math.round((produced / target) * 100) : 0;
-  const or = ((produced * 1.8833) / minutes) * 100;
 
-  document.getElementById('or').value = or.toFixed(1);
+  const pct =
+    target > 0
+      ? Math.round((produced / target) * 100)
+      : 0;
 
-  const status = document.getElementById('productionStatus');
-  if(status){
-    let color='#c62828', icon='🔴';
-    if(pct >= 100){ color='#2e7d32'; icon='🟢'; }
-    else if(pct >= 95){ color='#ef6c00'; icon='🟠'; }
+  const or =
+    ((produced * 1.8833) / minutes) * 100;
 
-    status.style.color=color;
-    status.innerHTML=`${icon} ${produced} de ${target} (${diff>=0?'+':''}${diff} vs ${pct}%)`;
+  document.getElementById('or').value =
+    or.toFixed(1);
+
+  const status =
+    document.getElementById('productionStatus');
+
+  let color = '#c62828';
+  let icon = '🔴';
+
+  if (pct >= 100) {
+    color = '#2e7d32';
+    icon = '🟢';
+  } else if (pct >= 95) {
+    color = '#ef6c00';
+    icon = '🟠';
   }
+
+  status.style.color = color;
+
+  status.innerHTML =
+    `${icon} ${produced} de ${target} (${diff >= 0 ? '+' : ''}${diff} vs ${pct}%)`;
 }
 
-function buildPills(){
- const container=document.getElementById('timePills');
- container.innerHTML='';
- shiftHours.forEach(h=>{
-   const btn=document.createElement('button');
-   btn.type='button';
-   btn.textContent=h;
-   btn.onclick=()=>selectPill(btn,h);
-   container.appendChild(btn);
- });
+function buildPills() {
+
+  const container =
+    document.getElementById('timePills');
+
+  container.innerHTML = '';
+
+  const plan = getCurrentPlan();
+
+  Object.keys(plan).forEach(hour => {
+
+    const btn =
+      document.createElement('button');
+
+    btn.type = 'button';
+
+    btn.textContent = hour;
+
+    btn.addEventListener('click', () => {
+      selectPill(btn, hour);
+    });
+
+    container.appendChild(btn);
+
+  });
 }
 
-function selectPill(btn,value){
- document.querySelectorAll('#timePills button').forEach(b=>b.classList.remove('active'));
- document.getElementById('customTime').value='';
- btn.classList.add('active');
- selectedTime=value;
- updateBadge();
- calculateKPIs();
+function selectPill(btn, value) {
+
+  document
+    .querySelectorAll('#timePills button')
+    .forEach(b => b.classList.remove('active'));
+
+  document.getElementById('customTime').value = '';
+
+  btn.classList.add('active');
+
+  selectedTime = value;
+
+  updateBadge();
+
+  calculateKPIs();
 }
 
-function updateBadge(){
- document.getElementById('selectedTimeBadge').textContent =
-   selectedTime ? '⏰ '+selectedTime : 'Sin seleccionar';
+function updateBadge() {
+
+  document.getElementById(
+    'selectedTimeBadge'
+  ).textContent =
+    selectedTime
+      ? '⏰ ' + selectedTime
+      : 'Sin seleccionar';
 }
 
-function onCustomTimeChange(){
- const val=document.getElementById('customTime').value;
- if(!val) return;
- document.querySelectorAll('#timePills button').forEach(b=>b.classList.remove('active'));
- const [hh,mm]=val.split(':');
- const h=Number(hh);
- selectedTime=((h%12)||12)+':'+mm+' '+(h>=12?'PM':'AM');
- updateBadge();
- calculateKPIs();
+function updateShift() {
+
+  currentShift =
+    document.getElementById('shiftSelector').value;
+
+  selectedTime = '';
+
+  updateBadge();
+
+  document.getElementById('target').value = '';
+
+  document.getElementById('or').value = '';
+
+  document.getElementById(
+    'productionStatus'
+  ).innerHTML = 'Selecciona una hora';
+
+  buildPills();
 }
 
-function updateClock(){
- document.getElementById('reportTime').textContent =
- new Date().toLocaleString('es-MX',{
-   weekday:'short',month:'short',day:'numeric',
-   hour:'2-digit',minute:'2-digit'
- });
+function onCustomTimeChange() {
+
+  const val =
+    document.getElementById('customTime').value;
+
+  if (!val) return;
+
+  document
+    .querySelectorAll('#timePills button')
+    .forEach(b => b.classList.remove('active'));
+
+  const [hh, mm] = val.split(':');
+
+  const h = Number(hh);
+
+  selectedTime =
+    ((h % 12) || 12) +
+    ':' +
+    mm +
+    ' ' +
+    (h >= 12 ? 'PM' : 'AM');
+
+  updateBadge();
 }
 
-function v(id){
- return document.getElementById(id).value.trim();
+function updateClock() {
+
+  document.getElementById('reportTime').textContent =
+    new Date().toLocaleString('es-MX', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 }
 
-function buildMessage(){
- if(!selectedTime){
-   alert('Selecciona la hora del reporte.');
-   return null;
- }
+function v(id) {
+  return document.getElementById(id).value.trim();
+}
 
- const produced=Number(v('produced'))||0;
- const target=Number(v('target'))||0;
- const diff=produced-target;
- const pct=target>0?Math.round((produced/target)*100):0;
+function buildMessage() {
 
- const offline=v('offlineDetail')
-   .split('\n')
-   .filter(x=>x.trim())
-   .map(x=>'- '+x.trim())
-   .join('\n');
+  if (!selectedTime) {
+    alert('Selecciona la hora del reporte.');
+    return null;
+  }
 
- const equip=v('equipDetail')
-   .split('\n')
-   .filter(x=>x.trim())
-   .map(x=>'- '+x.trim())
-   .join('\n');
+  const produced = Number(v('produced')) || 0;
+  const target = Number(v('target')) || 0;
+  const diff = produced - target;
 
- return `${v('reportTitle')}
+  const shiftSelector =
+    document.getElementById('shiftSelector');
+
+  const shiftName =
+    shiftSelector.options[
+      shiftSelector.selectedIndex
+    ].text;
+
+  const offline = v('offlineDetail')
+    .split('\n')
+    .filter(x => x.trim())
+    .map(x => '- ' + x.trim())
+    .join('\n');
+
+  const equip = v('equipDetail')
+    .split('\n')
+    .filter(x => x.trim())
+    .map(x => '- ' + x.trim())
+    .join('\n');
+
+  return `${v('reportTitle')}
+${shiftName}
+
 Numeros de final a las ${selectedTime}
 
-${produced} de ${target} (${diff>=0?'+':''}${diff} vs Plan)
+${produced} de ${target} (${diff >= 0 ? '+' : ''}${diff} vs Plan)
 
 Buffer UB2: ${v('buffer')}
 
@@ -461,48 +616,88 @@ Equipo: ${v('equipTime')}
 ${equip}`;
 }
 
-function sendToWhatsApp(){
- const msg=buildMessage();
- if(!msg) return;
+function sendToWhatsApp() {
 
- document.getElementById('genTimestamp').textContent =
- '✅ Generado: '+new Date().toLocaleTimeString();
+  const msg = buildMessage();
 
- window.open(
-   'https://wa.me/?text='+encodeURIComponent(msg),
-   '_blank'
- );
+  if (!msg) return;
+
+  document.getElementById('genTimestamp').textContent =
+    '✅ Generado: ' +
+    new Date().toLocaleTimeString();
+
+  window.open(
+    'https://wa.me/?text=' +
+    encodeURIComponent(msg),
+    '_blank'
+  );
 }
 
-function resetForm(){
- if(!confirm('¿Limpiar todos los campos?')) return;
+function resetForm() {
 
- selectedTime='';
- updateBadge();
+  if (!confirm('¿Limpiar todos los campos?'))
+    return;
 
- document.querySelectorAll('#timePills button').forEach(b=>b.classList.remove('active'));
+  selectedTime = '';
 
- document.querySelectorAll('input').forEach(el=>{
-   if(el.type==='time') el.value='';
-   else el.value='';
- });
+  updateBadge();
 
- document.querySelectorAll('textarea').forEach(el=>el.value='');
+  document
+    .querySelectorAll('#timePills button')
+    .forEach(b => b.classList.remove('active'));
 
- document.getElementById('reportTitle').value='Final';
- document.getElementById('genTimestamp').textContent='';
+  document
+    .querySelectorAll('input')
+    .forEach(el => {
+
+      if (el.id === 'target' || el.id === 'or') {
+        el.value = '';
+      } else if (el.type === 'time') {
+        el.value = '';
+      } else {
+        el.value = '0';
+      }
+
+    });
+
+  document
+    .querySelectorAll('textarea')
+    .forEach(el => el.value = '');
+
+  document.getElementById('reportTitle').value = 'Final';
+
+  document.getElementById('genTimestamp').textContent = '';
+
+  updateShift();
 }
 
-buildPills();
 updateClock();
-setInterval(updateClock,10000);
 
-document.getElementById('customTime').addEventListener('change',onCustomTimeChange);
-document.getElementById('btnSend').addEventListener('click',sendToWhatsApp);
-document.getElementById('btnReset').addEventListener('click',resetForm);
-document.getElementById('produced').addEventListener('input',calculateKPIs);
+document
+  .getElementById('shiftSelector')
+  .addEventListener('change', updateShift);
+
+document
+  .getElementById('customTime')
+  .addEventListener('change', onCustomTimeChange);
+
+document
+  .getElementById('btnSend')
+  .addEventListener('click', sendToWhatsApp);
+
+document
+  .getElementById('btnReset')
+  .addEventListener('click', resetForm);
+
+document
+  .getElementById('produced')
+  .addEventListener('input', calculateKPIs);
+
+setInterval(updateClock, 10000);
+
+updateShift();
+
 </script>
-
 
 </body>
 </html>
